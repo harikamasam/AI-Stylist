@@ -1,0 +1,255 @@
+/* ============================================
+   AI STYLIST - PREMIUM LANDING PAGE STYLES
+   Add this to your src/index.css or App.css
+   ============================================ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (Theme Variables)
+   ============================================ */
+:root {
+  /* Premium AI Stylist Theme - Matte Black + Cream + Silver + Cyan accent */
+  --background: #0f0f14;
+  --foreground: #f0f0e8;
+  --card: #16161e;
+  --card-foreground: #f0f0e8;
+  --popover: #121218;
+  --popover-foreground: #f0f0e8;
+  --primary: #f0f0e8;
+  --primary-foreground: #0f0f14;
+  --secondary: #1e1e26;
+  --secondary-foreground: #f0f0e8;
+  --muted: #1a1a22;
+  --muted-foreground: #a0a098;
+  --accent: #22d3ee;
+  --accent-foreground: #0f0f14;
+  --destructive: #ef4444;
+  --destructive-foreground: #ef4444;
+  --border: #2a2a34;
+  --input: #1a1a22;
+  --ring: #22d3ee;
+  --radius: 0.75rem;
+  
+  /* Custom AI accent colors */
+  --ai-cyan: #22d3ee;
+  --ai-cyan-glow: #38d9f0;
+  --cream: #f0f0e8;
+  --silver: #a8a8b0;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================
+   TAILWIND-COMPATIBLE UTILITY CLASSES
+   ============================================ */
+
+/* Background colors */
+.bg-background { background-color: var(--background); }
+.bg-foreground { background-color: var(--foreground); }
+.bg-card { background-color: var(--card); }
+.bg-popover { background-color: var(--popover); }
+.bg-primary { background-color: var(--primary); }
+.bg-secondary { background-color: var(--secondary); }
+.bg-secondary\/30 { background-color: rgba(30, 30, 38, 0.3); }
+.bg-secondary\/50 { background-color: rgba(30, 30, 38, 0.5); }
+.bg-secondary\/80 { background-color: rgba(30, 30, 38, 0.8); }
+.bg-muted { background-color: var(--muted); }
+.bg-accent { background-color: var(--accent); }
+.bg-destructive { background-color: var(--destructive); }
+.bg-border { background-color: var(--border); }
+
+/* Text colors */
+.text-foreground { color: var(--foreground); }
+.text-primary { color: var(--primary); }
+.text-primary-foreground { color: var(--primary-foreground); }
+.text-secondary-foreground { color: var(--secondary-foreground); }
+.text-muted-foreground { color: var(--muted-foreground); }
+.text-accent { color: var(--accent); }
+.text-accent-foreground { color: var(--accent-foreground); }
+
+/* Border colors */
+.border-border { border-color: var(--border); }
+.border-border\/50 { border-color: rgba(42, 42, 52, 0.5); }
+.border-input { border-color: var(--input); }
+
+/* Hover states */
+.hover\:bg-primary\/90:hover { background-color: rgba(240, 240, 232, 0.9); }
+.hover\:bg-secondary:hover { background-color: var(--secondary); }
+.hover\:bg-secondary\/50:hover { background-color: rgba(30, 30, 38, 0.5); }
+.hover\:text-primary:hover { color: var(--primary); }
+.hover\:border-cyan-500\/30:hover { border-color: rgba(34, 211, 238, 0.3); }
+.hover\:border-cyan-500\/50:hover { border-color: rgba(34, 211, 238, 0.5); }
+.hover\:bg-cyan-500\/5:hover { background-color: rgba(34, 211, 238, 0.05); }
+.hover\:bg-cyan-500\/20:hover { background-color: rgba(34, 211, 238, 0.2); }
+.hover\:bg-cyan-500\/30:hover { background-color: rgba(34, 211, 238, 0.3); }
+
+/* Ring offset for focus */
+.ring-offset-background { --tw-ring-offset-color: var(--background); }
+
+/* ============================================
+   PREMIUM GLASSMORPHISM
+   ============================================ */
+.glass {
+  background: rgba(22, 22, 30, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   AI GLOW EFFECTS
+   ============================================ */
+.ai-glow {
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.15),
+              0 0 60px rgba(34, 211, 238, 0.08),
+              inset 0 0 30px rgba(34, 211, 238, 0.03);
+}
+
+.ai-glow-strong {
+  box-shadow: 0 0 40px rgba(34, 211, 238, 0.3),
+              0 0 80px rgba(34, 211, 238, 0.15);
+}
+
+.text-glow {
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.5),
+               0 0 40px rgba(34, 211, 238, 0.3);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+/* Scan Line Animation */
+@keyframes scanline {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.animate-scanline {
+  animation: scanline 2.5s ease-in-out infinite;
+}
+
+/* Pulse Glow */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(34, 211, 238, 0.6); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Float Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(34, 211, 238, 0.1), 
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Waveform Animation */
+@keyframes waveform {
+  0%, 100% { height: 4px; }
+  50% { height: 20px; }
+}
+
+.waveform-bar {
+  animation: waveform 0.8s ease-in-out infinite;
+}
+
+/* ============================================
+   GRADIENT TEXT
+   ============================================ */
+.gradient-text {
+  background: linear-gradient(135deg, #f5f5dc 0%, #e8e8d8 50%, #d4d4c4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   PREMIUM BORDER GRADIENT
+   ============================================ */
+.border-gradient {
+  position: relative;
+}
+
+.border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.3), transparent, rgba(34, 211, 238, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ============================================
+   RADIAL GRADIENT BACKGROUND
+   ============================================ */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+/* ============================================
+   CYAN COLOR UTILITIES
+   ============================================ */
+.text-cyan-400 { color: #22d3ee; }
+.bg-cyan-400 { background-color: #22d3ee; }
+.bg-cyan-500\/5 { background-color: rgba(6, 182, 212, 0.05); }
+.bg-cyan-500\/10 { background-color: rgba(6, 182, 212, 0.1); }
+.bg-cyan-500\/20 { background-color: rgba(6, 182, 212, 0.2); }
+.bg-cyan-500\/30 { background-color: rgba(6, 182, 212, 0.3); }
+.border-cyan-400 { border-color: #22d3ee; }
+.border-cyan-500 { border-color: #06b6d4; }
+.border-cyan-500\/20 { border-color: rgba(6, 182, 212, 0.2); }
+.border-cyan-500\/30 { border-color: rgba(6, 182, 212, 0.3); }
+.border-cyan-500\/50 { border-color: rgba(6, 182, 212, 0.5); }
+.ring-cyan-400 { --tw-ring-color: #22d3ee; }
+.from-cyan-400\/20 { --tw-gradient-from: rgba(34, 211, 238, 0.2); }
+.from-cyan-400\/30 { --tw-gradient-from: rgba(34, 211, 238, 0.3); }
+.from-cyan-500\/10 { --tw-gradient-from: rgba(6, 182, 212, 0.1); }
+.from-cyan-500\/20 { --tw-gradient-from: rgba(6, 182, 212, 0.2); }
+.from-cyan-900\/20 { --tw-gradient-from: rgba(22, 78, 99, 0.2); }
+.to-cyan-400 { --tw-gradient-to: #22d3ee; }
+.to-cyan-600\/10 { --tw-gradient-to: rgba(8, 145, 178, 0.1); }
+.to-cyan-600\/20 { --tw-gradient-to: rgba(8, 145, 178, 0.2); }
+.via-cyan-400 { --tw-gradient-via: #22d3ee; }
+.from-cyan-500 { --tw-gradient-from: #06b6d4; }

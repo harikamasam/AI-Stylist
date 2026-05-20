@@ -323,7 +323,7 @@ function TrackingPanel({ videoRef, canvasRef, loadingText, cameraUnavailable, ca
           <div
             className={`flex flex-col items-center justify-center bg-[linear-gradient(135deg,rgba(214,194,161,0.12),rgba(24,24,27,0.72))] p-8 text-center ${
               compact
-                ? "min-h-[260px] sm:min-h-[320px] xl:min-h-[360px]"
+                ? "min-h-[220px] sm:min-h-[260px] xl:min-h-[300px]"
                 : "min-h-[360px] sm:min-h-[460px] xl:min-h-[560px]"
             }`}
           >
@@ -334,7 +334,6 @@ function TrackingPanel({ videoRef, canvasRef, loadingText, cameraUnavailable, ca
             <p className="mt-4 max-w-sm text-gray-300">
               Camera is paused. The AI mirror is ready for {trackingMode.subtitle.toLowerCase()}.
             </p>
-            <div className="mt-6 h-24 w-24 rounded-full border border-stone-200/10 bg-stone-100/[0.05] shadow-2xl shadow-black/30" />
           </div>
         ) : (
           <>

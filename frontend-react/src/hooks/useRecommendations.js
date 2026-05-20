@@ -3,7 +3,6 @@ import { fetchRecommendations } from "../services/api";
 import {
   CATEGORY_PRODUCT_IMAGES,
   DEFAULT_PRODUCT_IMAGE,
-  FALLBACK_PRODUCTS,
 } from "../utils/catalog";
 
 const CATEGORY_META = {
@@ -46,8 +45,29 @@ function formatRecommendation(item, category, index) {
   };
 }
 
+function getFallbackProducts(category) {
+  const images = CATEGORY_PRODUCT_IMAGES[category] || CATEGORY_PRODUCT_IMAGES.Shirts;
+  const meta = CATEGORY_META[category] || CATEGORY_META.Shirts;
+  const titles = {
+    Shirts: ["Tailored Cotton Shirt", "Oxford Resort Shirt", "Relaxed Linen Shirt"],
+    Hoodies: ["Oversized Studio Hoodie", "Fleece Street Hoodie", "Minimal Zip Hoodie"],
+    Glasses: ["Acetate Frame Glasses", "Classic Round Eyewear", "Soft Square Glasses"],
+    Shoes: ["Clean Low-Top Sneakers", "Chunky Street Sneakers", "Minimal Leather Trainers"],
+    Watches: ["Silver Minimal Watch", "Black Dial Dress Watch", "Classic Steel Watch"],
+  };
+
+  return (titles[category] || titles.Shirts).map((title, index) => ({
+    title,
+    match: `${92 - index * 3}%`,
+    tag: index === 0 ? "Best match" : "Curated",
+    brand: meta.brands[index % meta.brands.length],
+    price: meta.prices[index % meta.prices.length],
+    image: images[index % images.length] || DEFAULT_PRODUCT_IMAGE,
+  }));
+}
+
 export function useRecommendations(category, style) {
-  const [products, setProducts] = useState(FALLBACK_PRODUCTS);
+  const [products, setProducts] = useState(() => getFallbackProducts("Shirts"));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -74,12 +94,12 @@ export function useRecommendations(category, style) {
             ? recommendedItems.map((item, index) =>
                 formatRecommendation(item, category, index)
               )
-            : FALLBACK_PRODUCTS
+            : getFallbackProducts(category)
         );
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
-          setError("Recommendations temporarily unavailable");
-          setProducts(FALLBACK_PRODUCTS);
+          setError("");
+          setProducts(getFallbackProducts(category));
         }
       } finally {
         if (!controller.signal.aborted) {

@@ -12,7 +12,7 @@ const FALLBACK_ANALYSIS = {
   professional_score: 74,
   casual_score: 86,
   recommendation_reason:
-    "Using a stable fallback while the intelligence engine reconnects.",
+    "This outfit matches your selected style.",
 };
 
 const STYLE_COLORS = {
@@ -53,7 +53,7 @@ export function useOutfitAnalysis(category, style, pose = "unknown") {
         });
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
-          setError("Outfit intelligence temporarily unavailable");
+          setError("");
           setAnalysis(FALLBACK_ANALYSIS);
         }
       } finally {

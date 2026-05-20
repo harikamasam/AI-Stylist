@@ -9,7 +9,7 @@ function WebcamCapture() {
   React.useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => videoRef.current.srcObject = stream)
-      .catch(err => console.error(err));
+      .catch(() => setHasCamera(false));
   }, []);
 
   const handleTryOn = async () => {

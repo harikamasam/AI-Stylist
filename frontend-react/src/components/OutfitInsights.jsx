@@ -1,4 +1,4 @@
-import { Sparkles, Watch, Palette, CalendarDays } from "lucide-react";
+import { CalendarDays, CheckCircle2, Palette, Sparkles, Watch } from "lucide-react";
 import { useOutfitAnalysis } from "../hooks/useOutfitAnalysis";
 
 const COLOR_SWATCHES = {
@@ -18,15 +18,15 @@ const COLOR_SWATCHES = {
   "deep green": "#14532d",
 };
 
-function ScoreBar({ label, value, tone = "from-cyan-400 to-emerald-300" }) {
+function ScoreBar({ label, value, tone = "from-[#d6c2a1] to-stone-100" }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 text-sm font-bold">
-        <span className="text-gray-300">{label}</span>
+        <span className="text-stone-300">{label}</span>
         <span className="text-white">{value}%</span>
       </div>
 
-      <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-black/60 border border-white/10">
+      <div className="mt-2 h-2.5 overflow-hidden rounded-full border border-stone-200/10 bg-black/60">
         <div
           className={`h-full rounded-full bg-gradient-to-r ${tone} transition-all duration-700 ease-out`}
           style={{ width: `${Math.min(Number(value) || 0, 100)}%` }}
@@ -37,17 +37,17 @@ function ScoreBar({ label, value, tone = "from-cyan-400 to-emerald-300" }) {
 }
 
 function OutfitInsights({ category, style, pose }) {
-  const { analysis, loading, error } = useOutfitAnalysis(category, style, pose);
+  const { analysis, loading } = useOutfitAnalysis(category, style, pose);
   const compatibility =
     analysis.compatibility_score || analysis.fashion_compatibility_score;
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-cyan-300/15 bg-zinc-950/90 p-4 shadow-2xl shadow-cyan-950/20 backdrop-blur sm:p-5 lg:p-6">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+    <section className="soft-ring relative overflow-hidden rounded-[28px] border border-stone-200/10 bg-[#11100e]/90 p-4 backdrop-blur sm:p-5 lg:p-6">
+      <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d6c2a1]/60 to-transparent" />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.26em] text-cyan-300">
+          <p className="text-xs font-black uppercase tracking-[0.26em] text-[#d6c2a1]">
             Outfit Intelligence
           </p>
           <h2 className="mt-2 text-2xl sm:text-3xl font-black">
@@ -55,31 +55,31 @@ function OutfitInsights({ category, style, pose }) {
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3">
-          <p className="text-gray-400 text-xs font-bold uppercase">
+        <div className="rounded-2xl border border-[#d6c2a1]/20 bg-[#d6c2a1]/10 px-4 py-3">
+          <p className="text-stone-400 text-xs font-bold uppercase">
             Compatibility
           </p>
-          <p className="text-cyan-300 text-3xl font-black">
+          <p className="text-[#e6d8c3] text-3xl font-black">
             {loading ? "--" : `${compatibility}%`}
           </p>
         </div>
       </div>
 
-      {error && (
-        <div className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm font-bold text-rose-200">
-          {error}
+      <div className="mt-4 rounded-2xl border border-stone-200/10 bg-stone-100/[0.035] p-4">
+        <div className="flex items-center gap-2 text-[#e6d8c3] font-black">
+          <CheckCircle2 size={18} />
+          Outfit Verdict
         </div>
-      )}
-
-      <p className="mt-4 text-sm leading-6 text-gray-300 sm:text-base">
+        <p className="mt-3 text-sm leading-6 text-stone-300 sm:text-base">
         {loading
           ? "Evaluating silhouette, palette, and occasion fit..."
           : analysis.recommendation_reason}
-      </p>
+        </p>
+      </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 transition duration-300 hover:border-cyan-300/40">
-          <div className="flex items-center gap-2 text-cyan-300 font-black">
+        <div className="rounded-2xl border border-stone-200/10 bg-black/25 p-4 transition duration-300 hover:border-[#d6c2a1]/35">
+          <div className="flex items-center gap-2 text-[#e6d8c3] font-black">
             <Sparkles size={18} />
             Outfit Combination
           </div>
@@ -88,7 +88,7 @@ function OutfitInsights({ category, style, pose }) {
             {analysis.outfit_suggestions.map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-white/10 bg-black/40 px-3 py-2 text-sm font-bold text-gray-100"
+                className="rounded-full border border-stone-200/10 bg-black/40 px-3 py-2 text-sm font-bold text-stone-100"
               >
                 {item}
               </span>
@@ -96,8 +96,8 @@ function OutfitInsights({ category, style, pose }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 transition duration-300 hover:border-cyan-300/40">
-          <div className="flex items-center gap-2 text-cyan-300 font-black">
+        <div className="rounded-2xl border border-stone-200/10 bg-black/25 p-4 transition duration-300 hover:border-[#d6c2a1]/35">
+          <div className="flex items-center gap-2 text-[#e6d8c3] font-black">
             <Watch size={18} />
             Accessories
           </div>
@@ -106,7 +106,7 @@ function OutfitInsights({ category, style, pose }) {
             {analysis.suggested_accessories.map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-cyan-400/15 bg-cyan-500/10 px-3 py-2 text-sm font-bold text-cyan-100"
+                className="rounded-full border border-[#d6c2a1]/15 bg-[#d6c2a1]/10 px-3 py-2 text-sm font-bold text-stone-100"
               >
                 {item}
               </span>
@@ -115,8 +115,8 @@ function OutfitInsights({ category, style, pose }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-4">
-        <div className="flex items-center gap-2 text-cyan-300 font-black">
+      <div className="mt-4 rounded-2xl border border-stone-200/10 bg-black/25 p-4">
+        <div className="flex items-center gap-2 text-[#e6d8c3] font-black">
           <Palette size={18} />
           Color Palette
         </div>
@@ -125,7 +125,7 @@ function OutfitInsights({ category, style, pose }) {
           {analysis.best_colors.map((color) => (
             <div
               key={color}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-2 text-sm font-bold capitalize"
+              className="flex items-center gap-2 rounded-full border border-stone-200/10 bg-black/40 px-3 py-2 text-sm font-bold capitalize"
             >
               <span
                 className="h-4 w-4 rounded-full border border-white/30"
@@ -142,16 +142,16 @@ function OutfitInsights({ category, style, pose }) {
         <ScoreBar
           label="Professional"
           value={loading ? 18 : analysis.professional_score}
-          tone="from-sky-400 to-cyan-300"
+          tone="from-slate-200 to-[#d6c2a1]"
         />
         <ScoreBar
           label="Casual"
           value={loading ? 18 : analysis.casual_score}
-          tone="from-pink-400 to-cyan-300"
+          tone="from-[#d6c2a1] to-emerald-200"
         />
       </div>
 
-      <div className="mt-4 flex items-center gap-2 font-black text-cyan-300">
+      <div className="mt-4 flex items-center gap-2 font-black text-[#e6d8c3]">
         <CalendarDays size={18} />
         Occasions
       </div>

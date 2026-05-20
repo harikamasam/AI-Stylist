@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchProduct } from "../services/api";
-import { DEFAULT_PRODUCT } from "../utils/catalog";
+import { getDefaultProductForCategory } from "../utils/catalog";
 
-export function useProductExtraction(productUrl) {
-  const [product, setProduct] = useState(DEFAULT_PRODUCT);
+export function useProductExtraction(productUrl, category) {
+  const fallbackProduct = useMemo(
+    () => getDefaultProductForCategory(category),
+    [category]
+  );
+  const [product, setProduct] = useState(fallbackProduct);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setProduct(fallbackProduct);
+
     if (!productUrl.trim()) {
       setError("");
       return undefined;
@@ -27,12 +33,14 @@ export function useProductExtraction(productUrl) {
         );
 
         setProduct({
-          ...DEFAULT_PRODUCT,
+          ...fallbackProduct,
           ...data,
+          category,
         });
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
-          setError("Unable to extract product details");
+          setError("Showing curated preview for selected category.");
+          setProduct(fallbackProduct);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -45,7 +53,7 @@ export function useProductExtraction(productUrl) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [productUrl]);
+  }, [category, fallbackProduct, productUrl]);
 
   return useMemo(
     () => ({

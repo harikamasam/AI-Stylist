@@ -1,7 +1,7 @@
-function StyleSelector({ styles, style, setStyle }) {
+function StyleSelector({ styles, style, setStyle, compact = false }) {
   return (
-    <section className="mt-5 border-t border-stone-200/10 pt-5">
-      <h2 className="mb-4 text-sm font-black uppercase tracking-[0.24em] text-stone-500">
+    <section className={compact ? "" : "mt-5 border-t border-stone-200/10 pt-5"}>
+      <h2 className="mb-3 text-xs font-black uppercase tracking-[0.22em] text-stone-500">
         Select Fashion Style
       </h2>
 
