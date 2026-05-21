@@ -81,7 +81,7 @@ Backend `.env`:
 
 ```text
 BACKEND_CORS_ORIGINS=https://aistylist.in,https://www.aistylist.in
-GEMINI_API_KEY=
+GEMINI_API_KEY=AIzaSyA0X7_57zPiFNpUeXkmIo-chl033fSUBg8
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
