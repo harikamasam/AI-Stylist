@@ -81,3 +81,7 @@ export function fetchProduct(payload, signal) {
 export function fetchOutfitAnalysis(payload, signal) {
   return postJson("/outfit-analysis", payload, signal);
 }
+
+export function fetchAssistantReply(payload, signal) {
+  return postJson("/assistant", payload, signal);
+}

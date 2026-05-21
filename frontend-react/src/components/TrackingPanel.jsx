@@ -110,20 +110,112 @@ function TrackingPanel({ videoRef, canvasRef, loadingText, cameraUnavailable, ca
     ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
     if (results.segmentationMask) {
-      ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = "source-in";
-      ctx.fillStyle = "#22d3ee";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
+      drawSegmentationGlow(ctx, canvas, results.segmentationMask);
     }
 
     drawGrid(ctx, canvas);
+    drawGarmentPreview(ctx, canvas, results.poseLandmarks);
     drawPose(ctx, canvas, results.poseLandmarks);
     drawFocusOverlay(ctx, canvas, results.poseLandmarks, face);
     drawFaceBox(ctx, canvas, face);
     drawHUD(ctx);
+  };
+
+  const drawSegmentationGlow = (ctx, canvas, segmentationMask) => {
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.filter = "blur(2px)";
+    ctx.drawImage(segmentationMask, 0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = "source-in";
+    const glow = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    glow.addColorStop(0, "rgba(214,194,161,0.18)");
+    glow.addColorStop(0.5, "rgba(34,211,238,0.18)");
+    glow.addColorStop(1, "rgba(255,255,255,0.12)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  };
+
+  const drawGarmentPreview = (ctx, canvas, landmarks) => {
+    if (!landmarks || !["Shirts", "Hoodies"].includes(category)) return;
+
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+
+    if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) return;
+
+    const ls = {
+      x: leftShoulder.x * canvas.width,
+      y: leftShoulder.y * canvas.height,
+    };
+    const rs = {
+      x: rightShoulder.x * canvas.width,
+      y: rightShoulder.y * canvas.height,
+    };
+    const lh = {
+      x: leftHip.x * canvas.width,
+      y: leftHip.y * canvas.height,
+    };
+    const rh = {
+      x: rightHip.x * canvas.width,
+      y: rightHip.y * canvas.height,
+    };
+
+    const shoulderWidth = Math.abs(rs.x - ls.x);
+    const expand = category === "Hoodies" ? shoulderWidth * 0.22 : shoulderWidth * 0.14;
+    const neckDip = Math.max(18, shoulderWidth * 0.13);
+    const hemDrop = category === "Hoodies" ? 62 : 36;
+    const leftHem = { x: lh.x - expand * 0.35, y: lh.y + hemDrop };
+    const rightHem = { x: rh.x + expand * 0.35, y: rh.y + hemDrop };
+    const centerNeck = { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 + neckDip };
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.45)";
+    ctx.shadowBlur = 26;
+    ctx.shadowOffsetY = 18;
+
+    ctx.beginPath();
+    ctx.moveTo(ls.x - expand, ls.y + 8);
+    ctx.quadraticCurveTo(centerNeck.x - shoulderWidth * 0.18, centerNeck.y, centerNeck.x, centerNeck.y);
+    ctx.quadraticCurveTo(centerNeck.x + shoulderWidth * 0.18, centerNeck.y, rs.x + expand, rs.y + 8);
+    ctx.lineTo(rightHem.x, rightHem.y);
+    ctx.quadraticCurveTo((leftHem.x + rightHem.x) / 2, rightHem.y + 24, leftHem.x, leftHem.y);
+    ctx.closePath();
+
+    const garmentGradient = ctx.createLinearGradient(ls.x, ls.y, rh.x, rh.y);
+    garmentGradient.addColorStop(0, "rgba(246,241,229,0.48)");
+    garmentGradient.addColorStop(0.5, "rgba(214,194,161,0.34)");
+    garmentGradient.addColorStop(1, "rgba(20,20,18,0.5)");
+    ctx.fillStyle = garmentGradient;
+    ctx.globalAlpha = category === "Hoodies" ? 0.58 : 0.52;
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 0.95;
+    ctx.strokeStyle = "rgba(246,241,229,0.42)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.clip();
+    ctx.globalCompositeOperation = "screen";
+    for (let i = 0; i < 5; i += 1) {
+      ctx.beginPath();
+      const y = centerNeck.y + i * 44;
+      ctx.moveTo(ls.x - expand, y);
+      ctx.quadraticCurveTo(centerNeck.x, y + 18, rs.x + expand, y + 3);
+      ctx.strokeStyle = `rgba(255,255,255,${0.07 - i * 0.007})`;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+    }
+
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.beginPath();
+    ctx.ellipse(centerNeck.x, centerNeck.y - 4, shoulderWidth * 0.16, 18, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
   };
 
   const drawGrid = (ctx, canvas) => {

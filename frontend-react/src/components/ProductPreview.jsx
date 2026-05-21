@@ -10,9 +10,10 @@ const PLACEHOLDERS = [
 
 const TRY_ON_STEPS = {
   idle: "Ready to generate",
-  extracting: "Extracting product...",
-  analyzing: "Analyzing clothing...",
-  generating: "Generating try-on preview...",
+  extracting: "Detecting body landmarks...",
+  analyzing: "Extracting garment...",
+  generating: "Fitting clothing...",
+  rendering: "Rendering preview...",
   complete: "AI try-on preview ready",
 };
 
@@ -53,7 +54,8 @@ function ProductPreview({
   const isAnalyzing =
     tryOnState === "extracting" ||
     tryOnState === "analyzing" ||
-    tryOnState === "generating";
+    tryOnState === "generating" ||
+    tryOnState === "rendering";
   const isComplete = tryOnState === "complete";
   const statusText = loading
     ? "Extracting product..."
@@ -86,7 +88,7 @@ function ProductPreview({
             Paste product link
           </h2>
           <p className="max-w-2xl text-sm font-semibold leading-6 text-stone-400">
-            Paste product URL -> Generate AI Try-On -> See outfit on body.
+            Paste product URL -> extract garment -> fit clothing -> render preview.
           </p>
           <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-black text-cyan-100">
             {statusText}
@@ -131,7 +133,7 @@ function ProductPreview({
               </button>
             </div>
             <p className="mt-3 text-sm font-semibold leading-6 text-stone-400">
-              AI extracts clothing and previews it on your body instantly.
+              AI extracts clothing, aligns it with body landmarks, and previews the fit on your mirror.
             </p>
           </div>
 
@@ -151,12 +153,12 @@ function ProductPreview({
             ))}
           </div>
 
-        <div className="mt-5 grid overflow-hidden rounded-[26px] border border-stone-200/10 bg-black/30 text-left shadow-xl shadow-black/20 md:grid-cols-[200px_minmax(0,1fr)] lg:mx-auto lg:max-w-3xl">
+        <div className="mt-5 grid overflow-hidden rounded-[26px] border border-stone-200/10 bg-black/30 text-left shadow-xl shadow-black/20 md:grid-cols-[190px_minmax(0,1fr)] lg:mx-auto lg:max-w-3xl">
           <div className="relative overflow-hidden bg-zinc-900">
             <img
               src={product.image}
               alt={product.title}
-              className="h-[160px] w-full object-cover transition duration-500 hover:scale-[1.02] md:h-full md:min-h-[180px]"
+              className="h-[150px] w-full object-cover transition duration-500 hover:scale-[1.02] md:h-full md:min-h-[170px]"
             />
 
             {loading && (
@@ -174,7 +176,7 @@ function ProductPreview({
 
             {isComplete && (
               <div className="absolute right-3 top-3 rounded-full border border-[#d6c2a1]/30 bg-black/70 px-3 py-2 text-xs font-black text-[#e6d8c3] backdrop-blur">
-                AI Try-On
+                Rendered Preview
               </div>
             )}
           </div>

@@ -27,11 +27,11 @@ import { useRecommendations } from "../hooks/useRecommendations";
 import { CATEGORIES, STYLES } from "../utils/catalog";
 
 const NAV_ITEMS = [
-  ["try-on", "Try-On", Camera],
-  ["recommendations", "Recommendations", Shirt],
-  ["analytics", "Analytics", BarChart3],
-  ["wardrobe", "Wardrobe", Bookmark],
-  ["assistant", "Assistant", Bot],
+  ["try-on", "Try-On", Camera, "primary"],
+  ["assistant", "Aura Assistant", Bot, "primary"],
+  ["recommendations", "Recommendations", Shirt, "secondary"],
+  ["analytics", "Analytics", BarChart3, "secondary"],
+  ["wardrobe", "Wardrobe", Bookmark, "secondary"],
 ];
 
 const HERO_IMAGE =
@@ -202,13 +202,23 @@ function Dashboard() {
       setLoadingText("Generating try-on preview...");
     }, 1350);
 
+    const renderingTimer = window.setTimeout(() => {
+      setTryOnState("rendering");
+      setLoadingText("Rendering preview...");
+    }, 1950);
+
     const completeTimer = window.setTimeout(() => {
       setTryOnState("complete");
-      setLoadingText("AI try-on simulation ready");
-      showToast("AI try-on simulation ready");
-    }, 2300);
+      setLoadingText("AI try-on preview ready");
+      showToast("AI try-on preview ready");
+    }, 2850);
 
-    tryOnTimersRef.current = [analyzingTimer, generatingTimer, completeTimer];
+    tryOnTimersRef.current = [
+      analyzingTimer,
+      generatingTimer,
+      renderingTimer,
+      completeTimer,
+    ];
   }, [showToast]);
 
   const renderAuraDock = () => (
@@ -420,20 +430,29 @@ function Dashboard() {
               </button>
 
               <nav className="mt-8 space-y-1">
-                {NAV_ITEMS.map(([id, label, Icon]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => openTab(id)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-black transition ${
-                      activeTab === id
-                        ? "bg-stone-100 text-black"
-                        : "text-stone-300 hover:bg-stone-100/[0.06] hover:text-white"
-                    }`}
-                  >
-                    <Icon size={17} />
-                    {label}
-                  </button>
+                {["primary", "secondary"].map((group) => (
+                  <div key={group} className={group === "secondary" ? "pt-5" : ""}>
+                    <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.22em] text-stone-500">
+                      {group === "primary" ? "Primary" : "Secondary"}
+                    </p>
+                    {NAV_ITEMS.filter(([, , , itemGroup]) => itemGroup === group).map(
+                      ([id, label, Icon]) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => openTab(id)}
+                          className={`mb-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-black transition ${
+                            activeTab === id
+                              ? "bg-stone-100 text-black"
+                              : "text-stone-300 hover:bg-stone-100/[0.06] hover:text-white"
+                          }`}
+                        >
+                          <Icon size={17} />
+                          {label}
+                        </button>
+                      )
+                    )}
+                  </div>
                 ))}
               </nav>
             </aside>

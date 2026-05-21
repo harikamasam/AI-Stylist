@@ -78,6 +78,8 @@ Production environment variables:
 
 ```env
 BACKEND_CORS_ORIGINS=https://aistylist.in,https://www.aistylist.in
+GEMINI_API_KEY=your_google_gemini_api_key
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 After deployment, add the custom backend domain:
@@ -116,4 +118,3 @@ Browser checks:
 - Open Try-On, Recommendations, Analytics, Wardrobe, and Assistant.
 - Confirm the browser console has no errors.
 - Test mobile width in browser devtools and confirm no horizontal overflow.
-

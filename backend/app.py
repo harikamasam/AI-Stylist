@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from services.assistant_service import generate_assistant_reply
 from services.outfit_engine import analyze_outfit
 
 load_dotenv()
@@ -50,6 +51,14 @@ class OutfitAnalysisRequest(BaseModel):
     style: str
     pose: str = "unknown"
     colors: list[str] = []
+
+
+class AssistantRequest(BaseModel):
+    message: str
+    category: str = "Shirts"
+    style: str = "Casual"
+    colors: list[str] = []
+    history: list[dict] = []
 
 
 @app.get("/health")
@@ -159,4 +168,15 @@ def outfit_analysis(req: OutfitAnalysisRequest):
         category=req.category,
         pose=req.pose,
         colors=req.colors,
+    )
+
+
+@app.post("/assistant")
+def assistant(req: AssistantRequest):
+    return generate_assistant_reply(
+        message=req.message,
+        category=req.category,
+        style=req.style,
+        colors=req.colors,
+        history=req.history,
     )

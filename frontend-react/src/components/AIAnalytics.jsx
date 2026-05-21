@@ -1,7 +1,7 @@
 import { ANALYTICS_METRICS, useAnalytics } from "../hooks/useAnalytics";
 
 function AIAnalytics({ category, style }) {
-  const { analytics, averageScore, loading } = useAnalytics(
+  const { analytics, averageScore, insights, loading } = useAnalytics(
     category,
     style
   );
@@ -27,6 +27,22 @@ function AIAnalytics({ category, style }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
+        {insights.map((insight) => (
+          <div
+            key={insight.title}
+            className="rounded-2xl border border-stone-200/10 bg-stone-100/[0.035] p-3 sm:p-4"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d6c2a1]">
+              {insight.title}
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-stone-300">
+              {insight.text}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {ANALYTICS_METRICS.map((metric) => {
           const value = Number(analytics[metric.key] || 0);
 

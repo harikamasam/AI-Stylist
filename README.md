@@ -81,6 +81,8 @@ Backend `.env`:
 
 ```text
 BACKEND_CORS_ORIGINS=https://aistylist.in,https://www.aistylist.in
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 ## Setup
