@@ -9,15 +9,26 @@ const FIREBASE_AUTH_SCRIPT =
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
+    const existingScript = document.querySelector(`script[src="${src}"]`);
+
+    if (existingScript?.dataset.loaded === "true") {
       resolve();
+      return;
+    }
+
+    if (existingScript) {
+      existingScript.addEventListener("load", resolve, { once: true });
+      existingScript.addEventListener("error", reject, { once: true });
       return;
     }
 
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    script.onload = resolve;
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      resolve();
+    };
     script.onerror = reject;
     document.head.appendChild(script);
   });

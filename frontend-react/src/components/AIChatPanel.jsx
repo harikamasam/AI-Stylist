@@ -9,8 +9,20 @@ const STARTER_MESSAGES = [
   },
 ];
 
-function buildReply(message, category, style) {
+function buildReply(message, category, style, assistantContext = {}, detectedColors = []) {
   const text = message.toLowerCase();
+  const productTitle = assistantContext.product?.title;
+  const metrics = assistantContext.tryOnMetrics || {};
+  const palette =
+    detectedColors.length > 0
+      ? detectedColors.slice(0, 3).join(", ")
+      : "black, cream, and grey";
+  const contextLead = productTitle
+    ? `For ${productTitle}, your ${style} ${category.toLowerCase()} direction should use the ${palette} palette deliberately. `
+    : `With ${category} selected in a ${style} style, use the ${palette} palette as the outfit base. `;
+  const fitContext = metrics.landmarksDetected
+    ? `The mirror is reading ${metrics.confidence}% fit confidence with ${metrics.alignment} shoulder alignment, so keep the silhouette balanced around the upper body. `
+    : "";
   const categoryAdvice = {
     Shirts: "For shirts, prioritize shoulder line, collar shape, and whether the hem can be tucked cleanly.",
     Hoodies: "For hoodies, watch volume: oversized works best when the pants or shoes create balance.",
@@ -44,7 +56,7 @@ function buildReply(message, category, style) {
   }
 
   if (text.includes("color") || text.includes("match")) {
-    return `${style} works well with a black, white, grey, beige, or navy base. For ${category}, keep one hero color, repeat it once in the outfit, and use silver or matte accessories to make the palette feel deliberate.`;
+    return `${contextLead}${fitContext}Keep one hero color, repeat it once in the outfit, and use silver or matte accessories to make the palette feel deliberate. Neutral contrast keeps the look versatile without making it flat.`;
   }
 
   if (text.includes("formal") || text.includes("office")) {
@@ -67,14 +79,49 @@ function buildReply(message, category, style) {
     return styleAdvice[style] || styleAdvice.Casual;
   }
 
-  return `${categoryAdvice[category] || "Keep the outfit balanced and intentional."} ${styleAdvice[style] || styleAdvice.Casual} Check three things before saving: silhouette balance, color harmony, and whether the outfit matches the occasion.`;
+  return `${contextLead}${fitContext}${categoryAdvice[category] || "Keep the outfit balanced and intentional."} ${styleAdvice[style] || styleAdvice.Casual} Check three things before saving: silhouette balance, color harmony, and whether the outfit matches the occasion.`;
 }
 
-function AIChatPanel({ open, onClose, category, style, embedded = false }) {
+function AIChatPanel({
+  open,
+  onClose,
+  category,
+  style,
+  embedded = false,
+  assistantContext = {},
+  detectedColors = [],
+}) {
   const [messages, setMessages] = useState(STARTER_MESSAGES);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [lastPrompt, setLastPrompt] = useState("");
+
+  const contextSummary = useMemo(() => {
+    const productTitle = assistantContext.product?.title || "No product selected";
+    const tryOnReady =
+      assistantContext.tryOnState === "complete"
+        ? `Try-on ready${assistantContext.tryOnMetrics?.confidence ? `, ${assistantContext.tryOnMetrics.confidence}% fit` : ""}`
+        : "Try-on context pending";
+
+    return [
+      `${category} / ${style}`,
+      productTitle,
+      detectedColors.length ? detectedColors.slice(0, 3).join(" + ") : "colors pending",
+      tryOnReady,
+      assistantContext.tryOnMetrics?.landmarksDetected
+        ? `Alignment ${assistantContext.tryOnMetrics.alignment}`
+        : "landmarks pending",
+      `${assistantContext.savedWardrobeCount || 0} saved looks`,
+    ];
+  }, [
+    assistantContext.product,
+    assistantContext.savedWardrobeCount,
+    assistantContext.tryOnMetrics,
+    assistantContext.tryOnState,
+    category,
+    detectedColors,
+    style,
+  ]);
 
   const quickPrompts = useMemo(
     () => [
@@ -103,14 +150,22 @@ function AIChatPanel({ open, onClose, category, style, embedded = false }) {
         message: trimmed,
         category,
         style,
+        colors: detectedColors,
+        product: assistantContext.product,
+        analytics_verdict: assistantContext.analyticsVerdict,
+        saved_wardrobe_count: assistantContext.savedWardrobeCount,
+        try_on_state: assistantContext.tryOnState,
+        try_on_metrics: assistantContext.tryOnMetrics,
         history,
       });
 
       setMessages((current) => [
         ...current,
         {
-          role: "assistant",
-          text: data?.reply || buildReply(trimmed, category, style),
+            role: "assistant",
+            text:
+              data?.reply ||
+              buildReply(trimmed, category, style, assistantContext, detectedColors),
         },
       ]);
     } catch {
@@ -119,7 +174,13 @@ function AIChatPanel({ open, onClose, category, style, embedded = false }) {
           ...current,
           {
             role: "assistant",
-            text: buildReply(trimmed, category, style),
+            text: buildReply(
+              trimmed,
+              category,
+              style,
+              assistantContext,
+              detectedColors
+            ),
           },
         ]);
         setTyping(false);
@@ -170,6 +231,19 @@ function AIChatPanel({ open, onClose, category, style, embedded = false }) {
             <X size={18} />
           </button>
         )}
+      </div>
+
+      <div className="shrink-0 border-b border-stone-200/10 px-5 py-3">
+        <div className="flex flex-wrap gap-2">
+          {contextSummary.map((item) => (
+            <span
+              key={item}
+              className="rounded-full border border-stone-200/10 bg-stone-100/[0.035] px-3 py-1.5 text-[11px] font-black text-stone-300"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">

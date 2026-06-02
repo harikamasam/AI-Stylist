@@ -173,6 +173,23 @@ def analyze_outfit(style, category, pose="unknown", colors=None):
         f"{normalized_style} styling works best here because the {category_anchor} pairs "
         f"with a {best_colors[0]}-led palette and {normalized_pose} posture signal."
     )
+    color_reason = (
+        f"{', '.join(best_colors[:3]).title()} works well because the palette keeps enough neutral contrast "
+        "for repeat styling while still giving the outfit a clear direction."
+    )
+    occasion_reason = (
+        f"{normalized_style} is suitable for {profile['occasions'][0]} because the outfit combines "
+        f"{profile['combinations'][0]} with controlled accessories instead of loud styling."
+    )
+    body_fit_reason = (
+        "The upper-body fit reads balanced because shoulder, torso, and hem proportions stay visually connected."
+        if normalized_category in ("Shirts", "Hoodies")
+        else f"The {category_anchor} keeps the product focus clear without overpowering the rest of the outfit."
+    )
+    style_balance_reason = (
+        f"The look stays coherent by pairing {profile['combinations'][0]} with "
+        f"{profile['accessories'][0]} and a limited color story."
+    )
 
     return {
         "style": normalized_style,
@@ -188,6 +205,12 @@ def analyze_outfit(style, category, pose="unknown", colors=None):
         "compatibility_score": compatibility_score,
         "confidence": confidence,
         "recommendation_reason": reason,
+        "reasoning": {
+            "color_match": color_reason,
+            "occasion_fit": occasion_reason,
+            "body_fit": body_fit_reason,
+            "style_balance": style_balance_reason,
+        },
         "avoid_combinations": [
             "neon with gold",
             "maroon with olive",

@@ -28,6 +28,7 @@ export function useProductExtraction(productUrl, category) {
         const data = await fetchProduct(
           {
             url: productUrl,
+            category,
           },
           controller.signal
         );

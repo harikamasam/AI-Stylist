@@ -5,6 +5,7 @@ function WebcamCapture() {
   const videoRef = useRef(null);
   const [option, setOption] = useState("Glasses");
   const [result, setResult] = useState(null);
+  const [hasCamera, setHasCamera] = useState(true);
 
   React.useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -13,6 +14,11 @@ function WebcamCapture() {
   }, []);
 
   const handleTryOn = async () => {
+    if (!hasCamera || !videoRef.current?.videoWidth) {
+      setHasCamera(false);
+      return;
+    }
+
     const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
@@ -28,6 +34,7 @@ function WebcamCapture() {
         method: "POST",
         body: form
       });
+      if (!response.ok) return;
 
       const imageBlob = await response.blob();
       setResult(URL.createObjectURL(imageBlob));
@@ -39,10 +46,17 @@ function WebcamCapture() {
       <video
         ref={videoRef}
         autoPlay
+        muted
+        playsInline
         className="rounded-lg border-4 border-gray-300 shadow-lg"
         width="640"
         height="480"
       />
+      {!hasCamera && (
+        <p className="mt-3 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600">
+          Camera permission is required for webcam try-on.
+        </p>
+      )}
       <div className="mt-4 flex items-center gap-4">
         <select
           value={option}

@@ -13,6 +13,16 @@ const FALLBACK_ANALYSIS = {
   casual_score: 86,
   recommendation_reason:
     "This outfit matches your selected style.",
+  reasoning: {
+    color_match:
+      "Black, white, and grey work well because neutral contrast keeps the outfit versatile.",
+    occasion_fit:
+      "Smart-casual score is high because relaxed pieces are balanced with clean accessories.",
+    body_fit:
+      "The silhouette keeps the upper body balanced by avoiding extra bulk around the shoulders.",
+    style_balance:
+      "Repeat one neutral color and finish with a slim accessory to make the outfit feel intentional.",
+  },
 };
 
 const STYLE_COLORS = {

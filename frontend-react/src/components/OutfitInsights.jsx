@@ -40,6 +40,12 @@ function OutfitInsights({ category, style, pose }) {
   const { analysis, loading } = useOutfitAnalysis(category, style, pose);
   const compatibility =
     analysis.compatibility_score || analysis.fashion_compatibility_score;
+  const reasoningCards = [
+    ["Color Match Reason", analysis.reasoning?.color_match],
+    ["Occasion Fit Reason", analysis.reasoning?.occasion_fit],
+    ["Body Fit Reason", analysis.reasoning?.body_fit],
+    ["Styling Suggestion", analysis.reasoning?.style_balance],
+  ].filter(([, text]) => text);
 
   return (
     <section className="soft-ring relative overflow-hidden rounded-[28px] border border-stone-200/10 bg-[#11100e]/90 p-4 backdrop-blur sm:p-5 lg:p-6">
@@ -76,6 +82,24 @@ function OutfitInsights({ category, style, pose }) {
           : analysis.recommendation_reason}
         </p>
       </div>
+
+      {!!reasoningCards.length && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {reasoningCards.map(([title, text]) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-stone-200/10 bg-black/25 p-4"
+            >
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d6c2a1]">
+                {title}
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-stone-300">
+                {text}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <div className="rounded-2xl border border-stone-200/10 bg-black/25 p-4 transition duration-300 hover:border-[#d6c2a1]/35">

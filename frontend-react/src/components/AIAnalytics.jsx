@@ -1,9 +1,18 @@
 import { ANALYTICS_METRICS, useAnalytics } from "../hooks/useAnalytics";
 
-function AIAnalytics({ category, style }) {
-  const { analytics, averageScore, insights, loading } = useAnalytics(
+function AIAnalytics({
+  category,
+  style,
+  colors = [],
+  pose = "unknown",
+  tryOnMetrics = {},
+}) {
+  const { analytics, averageScore, reasonCards, explainableAnalysis, loading } = useAnalytics(
     category,
-    style
+    style,
+    colors,
+    pose,
+    tryOnMetrics
   );
 
   return (
@@ -26,15 +35,82 @@ function AIAnalytics({ category, style }) {
         </div>
       </div>
 
+      <div className="mb-4 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.055] p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100">
+              Explainable AI Styling Panel
+            </p>
+            <h3 className="mt-1 text-lg font-black text-stone-50">
+              Color, occasion, body balance, and style logic
+            </h3>
+          </div>
+          <span className="rounded-full border border-[#d6c2a1]/25 bg-[#d6c2a1]/10 px-3 py-2 text-xs font-black text-[#e6d8c3]">
+            {loading ? "Evaluating" : "Reasoned verdicts"}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {[
+            ["Color Harmony Analysis", explainableAnalysis.color_harmony],
+            ["Body Balance Analysis", explainableAnalysis.body_balance],
+            ["Style Consistency Analysis", explainableAnalysis.style_consistency],
+          ].map(([title, item]) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-stone-200/10 bg-black/28 p-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#d6c2a1]">
+                  {title}
+                </p>
+                <span className="rounded-full border border-stone-200/10 bg-stone-100/[0.04] px-2 py-1 text-xs font-black text-stone-100">
+                  {loading ? "--" : `${item.verdict} ${item.score}%`}
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-stone-300">
+                {loading ? "Building deterministic fashion reasoning..." : item.reason}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {explainableAnalysis.occasion_analysis.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-stone-200/10 bg-stone-100/[0.03] p-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-stone-200">
+                  {item.label}
+                </p>
+                <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-xs font-black text-emerald-100">
+                  {loading ? "--" : `${item.verdict} ${item.score}%`}
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-stone-400">
+                {loading ? "Checking occasion suitability..." : item.reason}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
-        {insights.map((insight) => (
+        {reasonCards.map((insight) => (
           <div
             key={insight.title}
             className="rounded-2xl border border-stone-200/10 bg-stone-100/[0.035] p-3 sm:p-4"
           >
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d6c2a1]">
-              {insight.title}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d6c2a1]">
+                {insight.title}
+              </p>
+              <span className="rounded-full border border-stone-200/10 bg-black/35 px-2 py-1 text-xs font-black text-stone-200">
+                {loading ? "--" : `${insight.score}%`}
+              </span>
+            </div>
             <p className="mt-2 text-sm font-semibold leading-6 text-stone-300">
               {insight.text}
             </p>
@@ -82,6 +158,27 @@ function AIAnalytics({ category, style }) {
         <span className="bg-emerald-500/10 text-emerald-300 border border-emerald-400/20 px-3 py-2 rounded-full">
           {style}
         </span>
+        {colors.slice(0, 3).map((color) => (
+          <span
+            key={color}
+            className="rounded-full border border-stone-200/10 bg-stone-100/[0.035] px-3 py-2 text-stone-300"
+          >
+            {color}
+          </span>
+        ))}
+        {tryOnMetrics.landmarksDetected && (
+          <>
+            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-cyan-100">
+              Fit confidence {tryOnMetrics.confidence}%
+            </span>
+            <span className="rounded-full border border-stone-200/10 bg-stone-100/[0.035] px-3 py-2 text-stone-300">
+              Shoulder {tryOnMetrics.shoulder}
+            </span>
+            <span className="rounded-full border border-stone-200/10 bg-stone-100/[0.035] px-3 py-2 text-stone-300">
+              Alignment {tryOnMetrics.alignment}
+            </span>
+          </>
+        )}
       </div>
     </section>
   );

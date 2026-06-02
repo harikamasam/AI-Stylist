@@ -43,10 +43,32 @@ When useful, explain why the recommendation works through silhouette, color harm
 """.strip()
 
 
-def build_contextual_prompt(message, category, style, colors=None, history=None):
+def build_contextual_prompt(
+    message,
+    category,
+    style,
+    colors=None,
+    history=None,
+    product=None,
+    analytics_verdict="",
+    saved_wardrobe_count=0,
+    try_on_state="idle",
+    try_on_metrics=None,
+):
     selected_style = _compact(style, "Casual")
     selected_category = _compact(category, "Shirts")
     detected_colors = ", ".join(colors or []) if colors else "not detected"
+    selected_product = product or {}
+    product_title = _compact(selected_product.get("title"), "No product selected")
+    product_brand = _compact(selected_product.get("brand"), "unknown brand")
+    product_price = _compact(selected_product.get("price"), "unknown price")
+    metrics = try_on_metrics or {}
+    metric_summary = (
+        f"{metrics.get('confidence')}% confidence, {metrics.get('alignment')} alignment, "
+        f"shoulder {metrics.get('shoulder')}, chest {metrics.get('chest')}, body scale {metrics.get('bodyScale')}"
+        if metrics.get("landmarksDetected")
+        else "not detected yet"
+    )
     recent_history = "\n".join(
         f"{item.get('role', 'user')}: {item.get('text', '')}"
         for item in (history or [])[-6:]
@@ -61,6 +83,11 @@ Current styling context:
 - Selected category: {selected_category}
 - Selected style: {selected_style}
 - Detected colors: {detected_colors}
+- Product preview: {product_title} by {product_brand}, {product_price}
+- Analytics verdict: {_compact(analytics_verdict, "not available yet")}
+- Saved wardrobe items: {saved_wardrobe_count}
+- Try-on state: {_compact(try_on_state, "idle")}
+- Try-on CV metrics: {metric_summary}
 - Category guidance: {CATEGORY_GUIDANCE.get(selected_category, CATEGORY_GUIDANCE["Shirts"])}
 - Style direction: {STYLE_GUIDANCE.get(selected_style, STYLE_GUIDANCE["Casual"])}
 - Recent conversation:
@@ -85,28 +112,22 @@ def _extract_gemini_text(payload):
     return "\n".join(part for part in text_parts if part).strip()
 
 
-def call_gemini(message, category, style, colors=None, history=None):
+def _call_gemini_prompt(prompt, max_tokens=360, temperature=0.45):
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         return None
 
     model = os.getenv("GEMINI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
-    prompt = build_contextual_prompt(message, category, style, colors, history)
     url = GEMINI_ENDPOINT.format(model=model)
     body = {
         "system_instruction": {
             "parts": [{"text": build_system_instruction()}],
         },
-        "contents": [
-            {
-                "role": "user",
-                "parts": [{"text": prompt}],
-            }
-        ],
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.7,
+            "temperature": temperature,
             "topP": 0.9,
-            "maxOutputTokens": 220,
+            "maxOutputTokens": max_tokens,
         },
     }
 
@@ -121,7 +142,7 @@ def call_gemini(message, category, style, colors=None, history=None):
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=6) as response:
             data = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
         return None
@@ -129,17 +150,108 @@ def call_gemini(message, category, style, colors=None, history=None):
     return _extract_gemini_text(data) or None
 
 
-def fallback_assistant_reply(message, category, style, colors=None):
+def call_gemini(
+    message,
+    category,
+    style,
+    colors=None,
+    history=None,
+    product=None,
+    analytics_verdict="",
+    saved_wardrobe_count=0,
+    try_on_state="idle",
+    try_on_metrics=None,
+):
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return None
+
+    prompt = build_contextual_prompt(
+        message,
+        category,
+        style,
+        colors,
+        history,
+        product,
+        analytics_verdict,
+        saved_wardrobe_count,
+        try_on_state,
+        try_on_metrics,
+    )
+    return _call_gemini_prompt(prompt, max_tokens=220, temperature=0.7)
+
+
+def generate_analytics_reasoning(category, style, colors=None, pose="unknown", product=None):
+    palette = ", ".join(colors or []) if colors else "not detected"
+    product_title = _compact((product or {}).get("title"), "current product")
+    prompt = f"""
+Generate explainable fashion analytics for AI Stylist.
+
+Context:
+- Product: {product_title}
+- Category: {category}
+- Style: {style}
+- Colors: {palette}
+- Pose: {pose}
+
+Return strict JSON only with this shape:
+{{
+  "color_harmony": {{"verdict": "Excellent|Strong|Moderate", "score": 0, "reason": "..."}},
+  "occasion_analysis": [
+    {{"label": "Interview Fit", "verdict": "...", "score": 0, "reason": "..."}},
+    {{"label": "Business Casual Fit", "verdict": "...", "score": 0, "reason": "..."}},
+    {{"label": "Wedding/Event Fit", "verdict": "...", "score": 0, "reason": "..."}},
+    {{"label": "Party Fit", "verdict": "...", "score": 0, "reason": "..."}}
+  ],
+  "body_balance": {{"verdict": "Excellent|Strong|Moderate", "score": 0, "reason": "..."}},
+  "style_consistency": {{"verdict": "Excellent|Strong|Moderate", "score": 0, "reason": "..."}}
+}}
+Keep each reason one sentence and never use placeholder text.
+""".strip()
+
+    text = _call_gemini_prompt(prompt, max_tokens=460, temperature=0.35)
+    if not text:
+        return None
+
+    try:
+        return json.loads(text.strip().removeprefix("```json").removeprefix("```").removesuffix("```"))
+    except json.JSONDecodeError:
+        return None
+
+
+def fallback_assistant_reply(
+    message,
+    category,
+    style,
+    colors=None,
+    product=None,
+    analytics_verdict="",
+    saved_wardrobe_count=0,
+    try_on_state="idle",
+    try_on_metrics=None,
+):
     text = message.lower()
     selected_style = _compact(style, "Casual")
     selected_category = _compact(category, "Shirts")
+    product_title = _compact((product or {}).get("title"), "")
+    context = (
+        f"You selected {product_title} in {selected_category} with a {selected_style} style, "
+        if product_title
+        else f"You selected {selected_category} with a {selected_style} style, "
+    )
     palette = ", ".join(colors or ["black", "cream", "grey", "silver"])
+    metrics = try_on_metrics or {}
+    fit_sentence = (
+        f" The mirror is reading {metrics.get('confidence')}% fit confidence with {metrics.get('alignment')} shoulder alignment, so keep shoulder seams and torso volume controlled."
+        if metrics.get("landmarksDetected")
+        else ""
+    )
 
     if "interview" in text or "placement" in text or "microsoft" in text:
         return (
             f"For a {selected_style.lower()} interview look, start with a crisp white or light blue shirt, "
             "navy or charcoal trousers, clean dark shoes, and a silver watch. This works because the palette is calm, "
-            "structured, and recruiter-safe while still looking intentional. Avoid loud logos; let fit, grooming, and polish carry the outfit."
+            f"structured, and recruiter-safe while still looking intentional.{fit_sentence} Avoid loud logos; let fit, grooming, and polish carry the outfit."
         )
 
     if "black jeans" in text or "dark jeans" in text:
@@ -181,22 +293,54 @@ def fallback_assistant_reply(message, category, style, colors=None):
     if "color" in text or "match" in text:
         return (
             f"For your current {selected_style.lower()} direction, use {palette} as the base palette. "
-            "Pick one dominant neutral, one supporting color, and one accessory tone. This keeps the outfit cohesive and makes the product easier to style across occasions."
+            f"Pick one dominant neutral, one supporting color, and one accessory tone.{fit_sentence} This keeps the outfit cohesive and makes the product easier to style across occasions."
         )
 
     return (
-        f"You selected {selected_style} styling with {selected_category}, so I would prioritize {STYLE_GUIDANCE.get(selected_style, STYLE_GUIDANCE['Casual'])}. "
+        f"{context}so I would prioritize {STYLE_GUIDANCE.get(selected_style, STYLE_GUIDANCE['Casual'])}. "
         f"For this category, {CATEGORY_GUIDANCE.get(selected_category, CATEGORY_GUIDANCE['Shirts'])}. "
-        "Keep the palette tight, match the outfit to one clear occasion, and use one premium accessory to finish the look."
+        f"Keep the palette tight, match the outfit to one clear occasion, and use one premium accessory to finish the look.{fit_sentence}"
     )
 
 
-def generate_assistant_reply(message, category, style, colors=None, history=None):
-    gemini_reply = call_gemini(message, category, style, colors, history)
+def generate_assistant_reply(
+    message,
+    category,
+    style,
+    colors=None,
+    history=None,
+    product=None,
+    analytics_verdict="",
+    saved_wardrobe_count=0,
+    try_on_state="idle",
+    try_on_metrics=None,
+):
+    gemini_reply = call_gemini(
+        message,
+        category,
+        style,
+        colors,
+        history,
+        product,
+        analytics_verdict,
+        saved_wardrobe_count,
+        try_on_state,
+        try_on_metrics,
+    )
     if gemini_reply:
         return {"reply": gemini_reply, "source": "gemini"}
 
     return {
-        "reply": fallback_assistant_reply(message, category, style, colors),
+        "reply": fallback_assistant_reply(
+            message,
+            category,
+            style,
+            colors,
+            product,
+            analytics_verdict,
+            saved_wardrobe_count,
+            try_on_state,
+            try_on_metrics,
+        ),
         "source": "fallback",
     }

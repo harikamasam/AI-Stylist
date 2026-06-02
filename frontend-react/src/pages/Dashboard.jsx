@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   Bookmark,
@@ -53,15 +53,71 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState("try-on");
   const [toast, setToast] = useState("");
   const [tryOnState, setTryOnState] = useState("idle");
+  const [tryOnMetrics, setTryOnMetrics] = useState({
+    confidence: 0,
+    shoulderFit: 0,
+    torsoCoverage: 0,
+    alignmentConfidence: 0,
+    fitConfidence: 0,
+    shoulder: "--",
+    torso: "--",
+    chest: "--",
+    alignment: "pending",
+    alignmentVerdict: "Waiting",
+    bodyScale: "--",
+    overlaySmoothing: "0%",
+    landmarksDetected: false,
+  });
   const [landingChatOpen, setLandingChatOpen] = useState(false);
-  const { saveOutfit, user } = useAuth();
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const { saveOutfit, savedOutfits, user } = useAuth();
 
   const {
     products,
     loading: recommendationsLoading,
     error: recommendationsError,
   } = useRecommendations(category, style);
-  const detectedPose = cameraUnavailable ? "unknown" : "upright";
+  const detectedPose = cameraUnavailable
+    ? "unknown"
+    : tryOnMetrics.alignment === "tilted"
+      ? "relaxed"
+      : "upright";
+  const detectedColors = useMemo(
+    () => selectedProduct?.dominant_colors || [],
+    [selectedProduct]
+  );
+  const assistantContext = useMemo(
+    () => ({
+      product: selectedProduct,
+      analyticsVerdict:
+        tryOnState === "complete"
+          ? "AI try-on simulation preview rendered with upper-body fit context."
+          : "Try-on preview is not complete yet.",
+      savedWardrobeCount: savedOutfits.length,
+      tryOnState,
+      tryOnMetrics,
+    }),
+    [savedOutfits.length, selectedProduct, tryOnMetrics, tryOnState]
+  );
+
+  const tryOnWorkflowStages = useMemo(
+    () => [
+      ["extracting", "Extract Garment"],
+      ["analyzing", "Detect Body Landmarks"],
+      ["generating", "Build Body Mask"],
+      ["generating", "Fit Garment"],
+      ["rendering", "Render Try-On"],
+    ],
+    []
+  );
+  const activeTryOnStage = {
+    idle: -1,
+    extracting: 0,
+    analyzing: 1,
+    generating: 3,
+    rendering: 4,
+    complete: 4,
+  }[tryOnState] ?? -1;
 
   useEffect(() => {
     let cancelled = false;
@@ -190,21 +246,21 @@ function Dashboard() {
     tryOnTimersRef.current = [];
 
     setTryOnState("extracting");
-    setLoadingText("Extracting product...");
+    setLoadingText("Extracting garment from product link...");
 
     const analyzingTimer = window.setTimeout(() => {
       setTryOnState("analyzing");
-      setLoadingText("Analyzing clothing...");
+      setLoadingText("Detecting body landmarks...");
     }, 650);
 
     const generatingTimer = window.setTimeout(() => {
       setTryOnState("generating");
-      setLoadingText("Generating try-on preview...");
+      setLoadingText("Aligning shirt to torso...");
     }, 1350);
 
     const renderingTimer = window.setTimeout(() => {
       setTryOnState("rendering");
-      setLoadingText("Rendering preview...");
+      setLoadingText("Rendering AI try-on preview...");
     }, 1950);
 
     const completeTimer = window.setTimeout(() => {
@@ -257,13 +313,15 @@ function Dashboard() {
             setProductUrl={setProductUrl}
             onSelectCategory={setCategory}
             tryOnState={tryOnState}
+            onProductChange={setSelectedProduct}
             onStartTryOn={startTryOnSimulation}
             onSave={() =>
               handleSaveOutfit({
-                title: "AI Preview Look",
+                title: selectedProduct?.title || "AI Preview Look",
                 match: "Preview",
                 tag: "Try-On",
                 image:
+                  selectedProduct?.image ||
                   products[0]?.image ||
                   "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
               })
@@ -302,28 +360,82 @@ function Dashboard() {
               cameraUnavailable={cameraUnavailable}
               category={category}
               compact
+              tryOnState={tryOnState}
+              product={selectedProduct}
+              onMetricsChange={setTryOnMetrics}
             />
 
             <div className="rounded-[28px] border border-stone-200/10 bg-stone-100/[0.025] p-3 sm:p-4">
               <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#d6c2a1]">
-                AI Workflow
+                AI Processing Pipeline
               </p>
               <div className="mt-3 space-y-2">
-                {[
-                  "Product URL",
-                  "AI preview",
-                  "Body mirror",
-                  "Save look",
-                ].map((step, index) => (
+                {tryOnWorkflowStages.map(([, step], index) => (
                   <div
                     key={step}
-                    className="flex items-center gap-3 rounded-2xl border border-stone-200/10 bg-black/25 px-3 py-2.5 text-xs font-bold text-stone-300"
+                    className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-xs font-bold ${
+                      activeTryOnStage >= index
+                        ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-100"
+                        : "border-stone-200/10 bg-black/25 text-stone-400"
+                    }`}
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e6d8c3] text-xs font-black text-black">
-                      {index + 1}
+                      {activeTryOnStage >= index ? "OK" : index + 1}
                     </span>
                     {step}
                   </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.055] p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100">
+                  Fitting Indicators
+                </p>
+                <div className="mt-3 space-y-2 text-xs font-black text-stone-300">
+                  {[
+                    ["Shoulder Fit", `${tryOnMetrics.shoulderFit || 0}%`],
+                    ["Torso Coverage", `${tryOnMetrics.torsoCoverage || 0}%`],
+                    ["Alignment", tryOnMetrics.alignmentVerdict || "Waiting"],
+                    ["Fit Confidence", `${tryOnMetrics.fitConfidence || tryOnMetrics.confidence || 0}%`],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-stone-200/10 bg-black/25 px-3 py-2"
+                    >
+                      <span>{label}</span>
+                      <span className="text-[#e6d8c3]">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-stone-200/10 bg-black/25 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#d6c2a1]">
+                  More insights
+                </p>
+                <p className="mt-1 text-sm font-semibold text-stone-400">
+                  Keep the main flow focused, then review supporting intelligence when needed.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ["assistant", "Ask Aura"],
+                  ["recommendations", "Recommendations"],
+                  ["analytics", "Analytics"],
+                  ["wardrobe", "Wardrobe"],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => openTab(id)}
+                    className="button-press rounded-full border border-stone-200/10 bg-stone-100/[0.04] px-3 py-2 text-xs font-black text-stone-200 hover:-translate-y-0.5 hover:border-[#d6c2a1]/35 hover:text-[#e6d8c3]"
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
             </div>
@@ -350,7 +462,14 @@ function Dashboard() {
     if (activeTab === "analytics") {
       return (
         <section className="mx-auto grid w-full max-w-6xl gap-5 xl:grid-cols-2">
-          <AIAnalytics category={category} style={style} compact />
+          <AIAnalytics
+            category={category}
+            style={style}
+            colors={detectedColors}
+            pose={detectedPose}
+            tryOnMetrics={tryOnMetrics}
+            compact
+          />
           <OutfitInsights category={category} style={style} pose={detectedPose} />
           <div className="xl:col-span-2">
             <BeforeAfter />
@@ -389,6 +508,8 @@ function Dashboard() {
           onClose={() => {}}
           category={category}
           style={style}
+          assistantContext={assistantContext}
+          detectedColors={detectedColors}
         />
       </section>
     );
@@ -433,7 +554,7 @@ function Dashboard() {
                 {["primary", "secondary"].map((group) => (
                   <div key={group} className={group === "secondary" ? "pt-5" : ""}>
                     <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.22em] text-stone-500">
-                      {group === "primary" ? "Primary" : "Secondary"}
+                      {group === "primary" ? "Main flow" : "More insights"}
                     </p>
                     {NAV_ITEMS.filter(([, , , itemGroup]) => itemGroup === group).map(
                       ([id, label, Icon]) => (
@@ -441,10 +562,12 @@ function Dashboard() {
                           key={id}
                           type="button"
                           onClick={() => openTab(id)}
-                          className={`mb-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-black transition ${
+                          className={`mb-1 flex w-full items-center gap-3 rounded-2xl px-3 transition ${
                             activeTab === id
                               ? "bg-stone-100 text-black"
-                              : "text-stone-300 hover:bg-stone-100/[0.06] hover:text-white"
+                              : group === "primary"
+                                ? "py-3 text-sm font-black text-stone-300 hover:bg-stone-100/[0.06] hover:text-white"
+                                : "py-2.5 text-xs font-bold text-stone-500 hover:bg-stone-100/[0.045] hover:text-stone-200"
                           }`}
                         >
                           <Icon size={17} />
@@ -511,6 +634,8 @@ function Dashboard() {
         onClose={() => setLandingChatOpen(false)}
         category={category}
         style={style}
+        assistantContext={assistantContext}
+        detectedColors={detectedColors}
       />
 
       {!workspaceOpen && listening && (
